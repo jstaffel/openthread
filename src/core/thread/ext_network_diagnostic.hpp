@@ -115,6 +115,10 @@ private:
      * Bitmask of child-provided TLVs to skip when a child attaches/re-attaches.
      *
      * When a child changes parent, we avoid re-querying these TLVs immediately
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4317291d7 (feat: implement Extended Network Diagnostic Protocol)
      * to reduce traffic. They will still be sent:
      * - On initial client registration (baseline query)
      * - Periodically via normal update cycles

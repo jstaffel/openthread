@@ -3451,6 +3451,10 @@ void Mle::HandleAddressSolicitResponse(Coap::Msg *aMsg, Error aResult)
     Get<ExtNetworkDiagnostic::Server>().HandleDetach();
 #endif
 
+#if OPENTHREAD_CONFIG_EXT_NETWORK_DIAGNOSTIC_SERVER_ENABLE
+    Get<ExtNetworkDiagnostic::Server>().HandleDetach();
+#endif
+
     SetAlternateRloc16(GetRloc16());
 
     SetRouterId(routerId);

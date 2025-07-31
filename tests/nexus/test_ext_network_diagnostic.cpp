@@ -297,7 +297,6 @@ DiagnosticValidator::ChildEntry &DiagnosticValidator::RouterEntry::GetOrCreateCh
             entry = &mChildren[Mle::kMaxChildren - 1];
             return *entry;
         }
-
         entry = &mChildren[mChildCount++];
 
         entry->Clear();

@@ -46,6 +46,7 @@
 #include "thread/mle.hpp"
 #include "thread/mle_types.hpp"
 #include "thread/uri_paths.hpp"
+#include "utils/channel_monitor.hpp"
 
 namespace ot {
 
@@ -1563,6 +1564,40 @@ Error Server::AppendHostTlvs(Message &aMessage, TlvSet aTlvs)
             break;
         }
 
+        case Tlv::kChannelMonitorConfig:
+        {
+            ChannelMonitorConfigTlv tlv;
+
+            tlv.Init();
+
+#if OPENTHREAD_CONFIG_CHANNEL_MONITOR_ENABLE
+            tlv.SetSampleInterval(Utils::ChannelMonitor::kSampleInterval);
+            tlv.SetRssiThreshold(Utils::ChannelMonitor::kRssiThreshold);
+            tlv.SetSampleWindow(Utils::ChannelMonitor::kSampleWindow);
+#endif
+
+            SuccessOrExit(error = aMessage.Append(tlv));
+            break;
+        }
+
+        case Tlv::kChannelMonitorOccupancies:
+        {
+            ChannelMonitorOccupanciesTlv tlv;
+            tlv.Init();
+
+#if OPENTHREAD_CONFIG_CHANNEL_MONITOR_ENABLE
+            tlv.SetCount(Get<Utils::ChannelMonitor>().GetSampleCount());
+
+            for (uint8_t channel = Radio::kChannelMin; channel <= Radio::kChannelMax; channel++)
+            {
+                tlv.SetChannelOccupancy(Get<Utils::ChannelMonitor>().GetChannelOccupancy(channel), channel);
+            }
+#endif
+
+            SuccessOrExit(error = aMessage.Append(tlv));
+            break;
+        }
+
         default:
             break;
         }
@@ -2829,6 +2864,33 @@ Error Client::GetNextTlv(const Coap::Message           &aMessage,
             aTlv.mData.mLinkMarginOut.mLinkMargin  = data.GetLinkMargin();
             aTlv.mData.mLinkMarginOut.mAverageRssi = data.GetAverageRssi();
             aTlv.mData.mLinkMarginOut.mLastRssi    = data.GetLastRssi();
+            ExitNow();
+        }
+
+        case Tlv::kChannelMonitorConfig:
+        {
+            ChannelMonitorConfigTlv data;
+            SuccessOrExit(error = aMessage.Read(offset, data));
+
+            aTlv.mData.mChannelMonitorConfig.mSampleInterval = data.GetSampleInterval();
+            aTlv.mData.mChannelMonitorConfig.mRssiThreshold  = data.GetRssiThreshold();
+            aTlv.mData.mChannelMonitorConfig.mSampleWindow   = data.GetSampleWindow();
+            ExitNow();
+        }
+
+        case Tlv::kChannelMonitorOccupancies:
+        {
+            ChannelMonitorOccupanciesTlv data;
+            SuccessOrExit(error = aMessage.Read(offset, data));
+
+            aTlv.mData.mChannelMonitorOccupancies.mCount = data.GetCount();
+
+            for (uint8_t channel = Radio::kChannelMin; channel <= Radio::kChannelMax; channel++)
+            {
+                aTlv.mData.mChannelMonitorOccupancies.mOccupancies[channel - Radio::kChannelMin]
+                    = data.GetChannelOccupancy(channel);
+            }
+
             ExitNow();
         }
 

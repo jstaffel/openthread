@@ -129,7 +129,8 @@ private:
          (1U << (Tlv::kThreadStackVersion - 16U)) | (1U << (Tlv::kVendorName - 16U)) |
              (1U << (Tlv::kVendorModel - 16U)) | (1U << (Tlv::kVendorSwVersion - 16U)) |
              (1U << (Tlv::kVendorAppUrl - 16U)) | (1U << (Tlv::kEui64 - 16U)),
-         (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMleCounters - 24U))},
+         (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMleCounters - 24U)) |
+             (1U << (Tlv::kChannelMonitorConfig - 24U)) | (1U << (Tlv::kChannelMonitorOccupancies - 24U))},
     }};
 
     /**

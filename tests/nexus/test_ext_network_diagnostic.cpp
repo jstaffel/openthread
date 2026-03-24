@@ -40,6 +40,8 @@
 namespace ot {
 namespace Nexus {
 
+uint32_t getDelayTimeChannelMonitorTests(void);
+
 class DiagnosticValidator
 {
 public:
@@ -1153,13 +1155,13 @@ bool DiagnosticValidator::ValidateEui64(Node &aNode, otExtNetworkDiagnosticTlv &
 
 bool DiagnosticValidator::ValidateChannelMonitorConfig(Node &aNode, otExtNetworkDiagnosticTlv &aTlv)
 {
-    uint32_t expectedSampleInterval = aNode.Get<Utils::ChannelMonitor>().kSampleInterval;
-    int8_t   expectedRssiThreshold  = aNode.Get<Utils::ChannelMonitor>().kRssiThreshold;
-    uint32_t expectedSampleWindow   = aNode.Get<Utils::ChannelMonitor>().kSampleWindow;
+    uint32_t actualSampleInterval = aNode.Get<Utils::ChannelMonitor>().kSampleInterval;
+    int8_t   actualRssiThreshold  = aNode.Get<Utils::ChannelMonitor>().kRssiThreshold;
+    uint32_t actualSampleWindow   = aNode.Get<Utils::ChannelMonitor>().kSampleWindow;
 
-    uint32_t actualSampleInterval = aTlv.mData.mChannelMonitorConfig.mSampleInterval;
-    int8_t   actualRssiThreshold  = aTlv.mData.mChannelMonitorConfig.mRssiThreshold;
-    uint32_t actualSampleWindow   = aTlv.mData.mChannelMonitorConfig.mSampleWindow;
+    uint32_t expectedSampleInterval = aTlv.mData.mChannelMonitorConfig.mSampleInterval;
+    int8_t   expectedRssiThreshold  = aTlv.mData.mChannelMonitorConfig.mRssiThreshold;
+    uint32_t expectedSampleWindow   = aTlv.mData.mChannelMonitorConfig.mSampleWindow;
 
     if (actualSampleInterval != expectedSampleInterval)
     {
@@ -1190,22 +1192,24 @@ bool DiagnosticValidator::ValidateChannelMonitorOccupancies(Node &aNode, otExtNe
     uint8_t channelMin = aNode.Get<ot::Radio>().kChannelMin;
     uint8_t channelMax = aNode.Get<ot::Radio>().kChannelMax;
 
-    uint32_t expectedSampleCount = aNode.Get<Utils::ChannelMonitor>().GetSampleCount();
-    uint32_t actualSampleCount = aTlv.mData.mChannelMonitorOccupancies.mCount;
+    uint32_t actualSampleCount = aNode.Get<Utils::ChannelMonitor>().GetSampleCount();
+    uint32_t expectedSampleCount = aTlv.mData.mChannelMonitorOccupancies.mCount;
+
+    uint32_t sampleCountTolerance = (getDelayTimeChannelMonitorTests() / aNode.Get<Utils::ChannelMonitor>().kSampleInterval) + 1;
 
     uint16_t expectedOccupancies[channelMax - channelMin + 1];
     uint16_t actualOccupancies[channelMax - channelMin + 1];
 
     for (uint8_t channel = channelMin; channel <= channelMax; channel++)
     {
-        expectedOccupancies[channel - channelMin] =
+        actualOccupancies[channel - channelMin] =
             aNode.Get<Utils::ChannelMonitor>().GetChannelOccupancy(channel);
 
-        actualOccupancies[channel - channelMin] =
+        expectedOccupancies[channel - channelMin] =
             aTlv.mData.mChannelMonitorOccupancies.mOccupancies[channel - channelMin];
     }
 
-    if (actualSampleCount != expectedSampleCount)
+    if ( ! ((actualSampleCount >= expectedSampleCount) && (expectedSampleCount >= actualSampleCount - sampleCountTolerance) ))
     {
         Log("ERROR: Channel Monitor Occupancies Sample Count mismatch. Expected: %lu, Actual: %lu",
             ToUlong(expectedSampleCount), ToUlong(actualSampleCount));
@@ -1444,12 +1448,13 @@ void TestDiagnosticServerAllAvailableTlvs(void)
     Log("The test requests the following TLVs:");
     Log("- Host TLVs: kMacAddress, kMode, kMlEid, kIp6AddressList, kAlocList, kThreadSpecVersion,");
     Log("             kThreadStackVersion, kVendorName, kVendorModel, kVendorAppUrl,");
-    Log("             kIp6LinkLocalAddressList, kMleCounters");
+    Log("             kIp6LinkLocalAddressList, kMleCounters, kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Child TLVs: kMacAddress, kMode, kTimeout, kLastHeard, kConnectionTime, kCsl, kMlEid,");
     Log("              kIp6AddressList, kAlocList, kThreadSpecVersion, kThreadStackVersion,");
-    Log("              kVendorName, kVendorModel, kVendorAppUrl, kIp6LinkLocalAddressList, kMleCounters");
+    Log("              kVendorName, kVendorModel, kVendorAppUrl, kIp6LinkLocalAddressList, kMleCounters,");
+    Log("              kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Neighbor TLVs: kMacAddress, kLastHeard, kConnectionTime, kThreadSpecVersion");
-    Log("Summary of tested TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 21, 22, 26");
+    Log("Summary of tested TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 21, 22, 26, 28, 26");
     Log("Purpose: Tests comprehensive TLV set excluding only unavailable/redundant TLVs");
     Log("========================================================================================");
     Log(" ");
@@ -1474,6 +1479,8 @@ void TestDiagnosticServerAllAvailableTlvs(void)
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kVendorAppUrl);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kMleCounters);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     // Set confirmed available child TLVs
     childSet.Clear();
@@ -1493,6 +1500,8 @@ void TestDiagnosticServerAllAvailableTlvs(void)
     childSet.Set(ExtNetworkDiagnostic::Tlv::kVendorAppUrl);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kMleCounters);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     // Set confirmed available neighbor TLVs
     neighborSet.Clear();
@@ -1767,6 +1776,8 @@ void TestDiagnosticServerComprehensiveStress(void)
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kVendorAppUrl);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kMleCounters);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     childSet.Clear();
     childSet.Set(ExtNetworkDiagnostic::Tlv::kMacAddress);
@@ -1786,6 +1797,8 @@ void TestDiagnosticServerComprehensiveStress(void)
     childSet.Set(ExtNetworkDiagnostic::Tlv::kVendorAppUrl);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kEui64);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     neighborSet.Clear();
     neighborSet.Set(ExtNetworkDiagnostic::Tlv::kMacAddress);
@@ -1806,13 +1819,13 @@ void TestDiagnosticServerComprehensiveStress(void)
     Log("The test requests the following TLVs:");
     Log("- Host TLVs: kMacAddress, kMode, kMlEid, kIp6AddressList, kAlocList, kThreadSpecVersion,");
     Log("             kThreadStackVersion, kVendorName, kVendorModel, kVendorSwVersion, kVendorAppUrl,");
-    Log("             kIp6LinkLocalAddressList, kMleCounters");
+    Log("             kIp6LinkLocalAddressList, kMleCounters, kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Child TLVs: kMacAddress, kMode, kTimeout, kLastHeard, kConnectionTime, kCsl, kMlEid,");
     Log("              kIp6AddressList, kAlocList, kThreadSpecVersion, kThreadStackVersion,");
     Log("              kVendorName, kVendorModel, kVendorSwVersion, kVendorAppUrl,");
-    Log("              kIp6LinkLocalAddressList, kEui64, kMleCounters");
+    Log("              kIp6LinkLocalAddressList, kEui64, kMleCounters, kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Neighbor TLVs: kMacAddress, kLastHeard, kConnectionTime, kThreadSpecVersion");
-    Log("Summary of tested TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 26");
+    Log("Summary of tested TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 26, 28, 29");
     Log("Stress parameters: %u iterations, %u children per iteration", static_cast<unsigned>(kStressIterations),
         static_cast<unsigned>(kNumChildren));
     Log("Purpose: Maximum stress test with all TLVs and 32 children over 5 iterations");
@@ -1967,6 +1980,8 @@ void TestDiagnosticServerMultiRouterWithFtdChildren(void)
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kMleCounters);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kEui64);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kMacCounters);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     // Child TLVs (MTD and FTD children)
     childSet.Clear();
@@ -1993,6 +2008,8 @@ void TestDiagnosticServerMultiRouterWithFtdChildren(void)
     childSet.Set(ExtNetworkDiagnostic::Tlv::kMacLinkErrorRatesIn);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kMleCounters);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kLinkMarginOut);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     // Neighbor TLVs
     neighborSet.Clear();
@@ -2031,7 +2048,7 @@ void TestDiagnosticServerMultiRouterWithFtdChildren(void)
     Log("- Neighbor TLVs: kMacAddress, kLastHeard, kConnectionTime, kLinkMarginIn, kMacLinkErrorRatesOut, "
         "kThreadSpecVersion, kLinkMarginOut");
     Log("Summary of tested TLV Ids: 0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, "
-        "27");
+        "27, 28, 29");
     Log("---------------------------------------------------------------------------------------");
     Log("Phase 1: Network Formation - Leader");
     leader.Form();
@@ -2671,6 +2688,11 @@ void TestDiagnosticValidateAddressTlvs(void)
     delete validator;
 }
 
+uint32_t getDelayTimeChannelMonitorTests(void)
+{
+    return 100 * 1000;
+}
+
 void TestDiagnosticValidateChannelMonitorTlvs(void)
 {
     Core                 nexus;
@@ -2734,7 +2756,7 @@ void TestDiagnosticValidateChannelMonitorTlvs(void)
     neighborSet.Clear();
 
     validator->Start(hostSet, childSet, neighborSet);
-    nexus.AdvanceTime(100 * 1000);
+    nexus.AdvanceTime(getDelayTimeChannelMonitorTests());
 
     Log("---------------------------------------------------------------------------------------");
     Log("Validating Host (Router1) TLVs");
@@ -2821,11 +2843,12 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
     Log("The test validates comprehensive TLV values:");
     Log("- Host TLVs: kMacAddress, kMode, kThreadSpecVersion, kThreadStackVersion, kVendorName,");
     Log("             kVendorModel, kVendorAppUrl, kVendorSwVersion, kIp6AddressList, kAlocList,");
-    Log("             kIp6LinkLocalAddressList");
+    Log("             kIp6LinkLocalAddressList, kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Child TLVs: kTimeout, kLastHeard, kConnectionTime, kMlEid, kThreadSpecVersion,");
-    Log("              kVendorName, kIp6AddressList, kCsl, kAlocList, kIp6LinkLocalAddressList, kEui64");
+    Log("              kVendorName, kIp6AddressList, kCsl, kAlocList, kIp6LinkLocalAddressList, kEui64,");
+    Log("              kChannelMonitorConfig, kChannelMonitorOccupancies");
     Log("- Neighbor TLVs: (none)");
-    Log("Summary of validated TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23");
+    Log("Summary of validated TLV Ids: 0, 1, 2, 3, 4, 5, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 28, 29");
     Log("Purpose: Comprehensive validation of all major TLV categories in one test");
     Log("========================================================================================");
     Log(" ");
@@ -2864,6 +2887,8 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kIp6AddressList);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kAlocList);
     hostSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    hostSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     childSet.Clear();
     childSet.Set(ExtNetworkDiagnostic::Tlv::kTimeout);
@@ -2877,11 +2902,13 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
     childSet.Set(ExtNetworkDiagnostic::Tlv::kAlocList);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList);
     childSet.Set(ExtNetworkDiagnostic::Tlv::kEui64);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig);
+    childSet.Set(ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies);
 
     neighborSet.Clear();
 
     validator->Start(hostSet, childSet, neighborSet);
-    nexus.AdvanceTime(100 * 1000);
+    nexus.AdvanceTime(getDelayTimeChannelMonitorTests());
 
     Log("---------------------------------------------------------------------------------------");
     Log("Validating Host (Router1) TLVs");
@@ -2916,6 +2943,12 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
     VerifyOrQuit(
         validator->ValidateTlvValue(router1, *router1Entry, ExtNetworkDiagnostic::Tlv::kIp6LinkLocalAddressList),
         "kIp6LinkLocalAddressList validation failed");
+    VerifyOrQuit(
+        validator->ValidateTlvValue(router1, *router1Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig),
+        "kChannelMonitorConfig validation failed");
+    VerifyOrQuit(
+        validator->ValidateTlvValue(router1, *router1Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies),
+        "kChannelMonitorOccupancies validation failed");
 
     Log("---------------------------------------------------------------------------------------");
     Log("Validating Child (MTD1) TLVs");
@@ -2950,6 +2983,10 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
                  "kIp6LinkLocalAddressList validation failed");
     VerifyOrQuit(validator->ValidateTlvValue(mtd1, *mtd1Entry, ExtNetworkDiagnostic::Tlv::kEui64),
                  "kEui64 validation failed");
+    VerifyOrQuit(validator->ValidateTlvValue(mtd1, *mtd1Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig),
+                 "kChannelMonitorConfig validation failed");
+    VerifyOrQuit(validator->ValidateTlvValue(mtd1, *mtd1Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies),
+                 "kChannelMonitorOccupancies validation failed");
 
     Log("---------------------------------------------------------------------------------------");
     Log("Validating Child (MTD2) TLVs");
@@ -2974,6 +3011,10 @@ void TestDiagnosticValidateComprehensiveTlvs(void)
                  "kIp6LinkLocalAddressList validation failed");
     VerifyOrQuit(validator->ValidateTlvValue(mtd2, *mtd2Entry, ExtNetworkDiagnostic::Tlv::kEui64),
                  "kEui64 validation failed");
+    VerifyOrQuit(validator->ValidateTlvValue(mtd2, *mtd2Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorConfig),
+                 "kChannelMonitorConfig validation failed");
+    VerifyOrQuit(validator->ValidateTlvValue(mtd2, *mtd2Entry, ExtNetworkDiagnostic::Tlv::kChannelMonitorOccupancies),
+                 "kChannelMonitorOccupancies validation failed");
 
     validator->Stop();
     delete validator;

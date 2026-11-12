@@ -85,8 +85,11 @@ extern "C" {
 #define OT_EXT_NETWORK_DIAGNOSTIC_TLV_MLE_COUNTERS 26U            ///< Mle Counters TLV
 #define OT_EXT_NETWORK_DIAGNOSTIC_TLV_LINK_MARGIN_OUT 27U         ///< Link Margin Out TLV
 
+#define OT_EXT_NETWORK_DIAGNOSTIC_TLV_CHANNEL_MONITOR_CONFIG 28U      ///< Channel Monitor Config TLV
+#define OT_EXT_NETWORK_DIAGNOSTIC_TLV_CHANNEL_MONITOR_OCCUPANCIES 29U ///< Channel Monitor Occupancies TLV
+
 #define OT_EXT_NETWORK_DIAGNOSTIC_DATA_TLV_MAX \
-    27U ///< The highest known tlv value that can be requested using a request set.
+    29U ///< The highest known tlv value that can be requested using a request set.
 
 #define OT_EXT_NETWORK_DIAGNOSTIC_MAX_THREAD_STACK_VERSION_TLV_LENGTH 64 ///< Max length of the Thread Stack Version TLV
 #define OT_EXT_NETWORK_DIAGNOSTIC_MAX_VENDOR_NAME_TLV_LENGTH 32          ///< Max lenght of the Vendor Name TLV
@@ -251,6 +254,19 @@ typedef struct otExtNetworkDiagnosticTlv
             int8_t  mLastRssi;
         } mLinkMarginOut;
 
+        struct
+        {
+            uint32_t mSampleInterval;
+            int8_t   mRssiThreshold;
+            uint32_t mSampleWindow;
+        } mChannelMonitorConfig;
+
+        struct
+        {
+            uint32_t mCount;
+            uint16_t mOccupancies[16];
+        } mChannelMonitorOccupancies;
+        
     } mData;
 } otExtNetworkDiagnosticTlv;
 

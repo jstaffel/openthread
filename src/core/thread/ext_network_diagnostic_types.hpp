@@ -74,6 +74,9 @@ public:
         kMacLinkErrorRatesIn = OT_EXT_NETWORK_DIAGNOSTIC_TLV_MAC_LINK_ERROR_RATES_IN,
         kMleCounters         = OT_EXT_NETWORK_DIAGNOSTIC_TLV_MLE_COUNTERS,
         kLinkMarginOut       = OT_EXT_NETWORK_DIAGNOSTIC_TLV_LINK_MARGIN_OUT,
+
+        kChannelMonitorConfig      = OT_EXT_NETWORK_DIAGNOSTIC_TLV_CHANNEL_MONITOR_CONFIG,
+        kChannelMonitorOccupancies = OT_EXT_NETWORK_DIAGNOSTIC_TLV_CHANNEL_MONITOR_OCCUPANCIES,
     };
 
     /**
@@ -105,7 +108,8 @@ public:
              (1U << (Tlv::kVendorSwVersion - 16U)) | (1U << (Tlv::kVendorAppUrl - 16U)) |
              (1U << (Tlv::kIp6LinkLocalAddressList - 16U)) | (1U << (Tlv::kEui64 - 16U)),
          (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMacLinkErrorRatesIn - 24U)) |
-             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U))},
+             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U)) |
+             (1U << (Tlv::kChannelMonitorConfig - 24U)) | (1U << (Tlv::kChannelMonitorOccupancies - 24U))},
     }};
 } OT_TOOL_PACKED_END;
 
@@ -170,7 +174,8 @@ private:
              (1U << (Tlv::kVendorName - 16U)) | (1U << (Tlv::kVendorModel - 16U)) |
              (1U << (Tlv::kVendorSwVersion - 16U)) | (1U << (Tlv::kVendorAppUrl - 16U)) |
              (1U << (Tlv::kIp6LinkLocalAddressList - 16U)) | (1U << (Tlv::kEui64 - 16U)),
-         (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMleCounters - 24U))},
+         (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMleCounters - 24U)) |
+             (1U << (Tlv::kChannelMonitorConfig - 24U)) | (1U << (Tlv::kChannelMonitorOccupancies - 24U))},
     }};
 
     /**
@@ -186,7 +191,8 @@ private:
              (1U << (Tlv::kVendorSwVersion - 16U)) | (1U << (Tlv::kVendorAppUrl - 16U)) |
              (1U << (Tlv::kIp6LinkLocalAddressList - 16U)) | (1U << (Tlv::kEui64 - 16U)),
          (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMacLinkErrorRatesIn - 24U)) |
-             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U))},
+             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U)) |
+             (1U << (Tlv::kChannelMonitorConfig - 24U)) | (1U << (Tlv::kChannelMonitorOccupancies - 24U))},
     }};
 
     /**
@@ -208,7 +214,8 @@ private:
              (1U << (Tlv::kVendorAppUrl - 16U)) | (1U << (Tlv::kIp6LinkLocalAddressList - 16U)) |
              (1U << (Tlv::kEui64 - 16U)),
          (1U << (Tlv::kMacCounters - 24U)) | (1U << (Tlv::kMacLinkErrorRatesIn - 24U)) |
-             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U))},
+             (1U << (Tlv::kMleCounters - 24U)) | (1U << (Tlv::kLinkMarginOut - 24U)) |
+             (1U << (Tlv::kChannelMonitorConfig - 24U)) | (1U << (Tlv::kChannelMonitorOccupancies - 24U))},
     }};
 
     /**

@@ -587,6 +587,133 @@ public:
     }
 } OT_TOOL_PACKED_END;
 
+/**
+ * Channel Monitor Config TLV (Type 28).
+ *
+ * Carries configuration parameters for the channel monitor feature.
+ * This TLV is used to configure the sampling interval, RSSI threshold,
+ * and sample window for channel monitoring.
+ */
+OT_TOOL_PACKED_BEGIN
+class ChannelMonitorConfigTlv : public Tlv, public TlvInfo<Tlv::kChannelMonitorConfig>
+{
+public:
+    /**
+     * Initializes the channel monitor config TLV with default values (all zeros).
+     */
+    void Init(void)
+    {
+        SetType(Tlv::kChannelMonitorConfig);
+        SetLength(sizeof(*this) - sizeof(Tlv));
+        mSampleInterval = 0;
+        mRssiThreshold  = 0;
+        mSampleWindow   = 0;
+    }
+
+    /**
+     * Sets the channel monitor sample interval.
+     *
+     * @param[in] aSampleInterval  The sample interval in milliseconds.
+     */
+    void SetSampleInterval(uint32_t aSampleInterval) { mSampleInterval = BigEndian::HostSwap32(aSampleInterval); }
+
+    /**
+     * Gets the channel monitor sample interval.
+     *
+     * @returns The sample interval in milliseconds.
+     */
+    uint32_t GetSampleInterval(void) const { return BigEndian::HostSwap32(mSampleInterval); }
+
+    /**
+     * Sets the channel monitor Rssi threshold.
+     *
+     * @param[in] aRssiThreshold  The Rssi Threshold in dBm.
+     */
+    void SetRssiThreshold(uint8_t aRssiThreshold) { mRssiThreshold = aRssiThreshold; }
+
+    /**
+     * Gets the channel monitor Rssi threshold.
+     *
+     * @returns The Rssi Threshold in dBm.
+     */
+    uint8_t GetRssiThreshold(void) const { return mRssiThreshold; }
+
+    /**
+     * Sets the channel monitor sample window length.
+     *
+     * @param[in] aSampleWindow  The averaging sample window length (in units of sample interval).
+     */
+    void SetSampleWindow(uint32_t aSampleWindow) { mSampleWindow = BigEndian::HostSwap32(aSampleWindow); }
+
+    /**
+     * Gets the channel monitor sample window length.
+     *
+     * @returns The averaging sample window length (in units of sample interval).
+     */
+    uint32_t GetSampleWindow(void) const { return BigEndian::HostSwap32(mSampleWindow); }
+
+private:
+    uint32_t mSampleInterval;
+    int8_t   mRssiThreshold;
+    uint32_t mSampleWindow;
+} OT_TOOL_PACKED_END;
+
+/**
+ * Channel Monitor Occupancies TLV (Type 29).
+ *
+ * Carries information about channel occupancies and measurement count of
+ * the channel monitor feature.
+ */
+OT_TOOL_PACKED_BEGIN
+class ChannelMonitorOccupanciesTlv : public Tlv, public TlvInfo<Tlv::kChannelMonitorConfig>
+{
+public:
+    /**
+     * Initializes the channel monitor occupancies TLV with default values (all ones).
+     */
+    void Init(void)
+    {
+        SetType(Tlv::kChannelMonitorOccupancies);
+        SetLength(sizeof(*this) - sizeof(Tlv));
+        mCount = 0;
+        memset(&mOccupancies, 0xFF, sizeof(mOccupancies));
+    }
+
+    /**
+     * Sets the channel monitor count.
+     *
+     * @param[in] aCount  The channel monitor count.
+     */
+    void SetCount(uint32_t aCount) { mCount = BigEndian::HostSwap32(aCount); }
+
+    /**
+    * Gets the channel monitor count.
+    *
+    * @returns The channel monitor count.
+    */
+    uint32_t GetCount(void) const { return BigEndian::HostSwap32(mCount); }
+
+    /**
+     * Sets the channel monitor occupancy for a channel.
+     *
+     * @param[in] aOccupancy  The channel occupancy.
+     * @param[in] aChannel    The IEEE802.15.4 channel number.
+     */
+    void SetChannelOccupancy(uint16_t aOccupancy, uint8_t aChannel) { mOccupancies[aChannel - Radio::kChannelMin] = BigEndian::HostSwap16(aOccupancy); }
+
+    /**
+     * Gets the channel monitor occupancy for a channel.
+     *
+     * @param[in] aChannel  The IEEE802.15.4 channel number.
+     * @returns The channel occupancy.
+     */
+    uint16_t GetChannelOccupancy(uint8_t aChannel) const { return BigEndian::HostSwap16(mOccupancies[aChannel - Radio::kChannelMin]); }
+
+private:
+    uint32_t mCount;
+    uint16_t mOccupancies[16];
+} OT_TOOL_PACKED_END;
+
 } // namespace ExtNetworkDiagnostic
 } // namespace ot
 

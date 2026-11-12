@@ -73,6 +73,9 @@ const char *Tlv::TypeToString(Type aType)
         "MacLinkErrorRatesIn",
         "MleCounters",
         "LinkMarginOut",
+
+        "ChannelMonitorConfig",
+        "ChannelMonitorOccupancies",
     };
 
     struct TypeValueChecker
@@ -110,6 +113,9 @@ const char *Tlv::TypeToString(Type aType)
         ValidateNextEnum(kMacLinkErrorRatesIn);
         ValidateNextEnum(kMleCounters);
         ValidateNextEnum(kLinkMarginOut);
+
+        ValidateNextEnum(kChannelMonitorConfig);
+        ValidateNextEnum(kChannelMonitorOccupancies);
     };
 
     return kTypeStrings[aType];
